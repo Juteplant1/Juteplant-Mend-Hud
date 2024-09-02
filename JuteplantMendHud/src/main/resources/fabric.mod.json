@@ -1,0 +1,37 @@
+{
+	"schemaVersion": 1,
+	"id": "jutehudmod",
+	"version": "${version}",
+	"name": "Juteplant Mend Hud",
+	"description": "Mending hud for second mends in SMP PvP fights",
+	"authors": [
+		"Juteplant"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "MIT",
+	"icon": "assets/jutehudmod/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"net.juteplant.JuteplantMendHud"
+		],
+		"client": [
+			"net.juteplant.JuteplantMendHudClient"
+		]
+	},
+	"mixins": [
+		"jutehudmod.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.16.0",
+		"minecraft": "~1.20.1",
+		"java": ">=21",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"another-mod": "*"
+	}
+}

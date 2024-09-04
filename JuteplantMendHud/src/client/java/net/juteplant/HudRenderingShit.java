@@ -9,9 +9,12 @@ import net.minecraft.client.render.GameRenderer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 
+import java.util.Arrays;
+import java.util.List;
+
 public class HudRenderingShit implements HudRenderCallback {
 
-    private static final int XP_PER_BOTTLE = 10;
+    private static final int DURA_PER_BOTTLE = 14;
     private static final int MAX_TARGET_DURABILITY = 407;
 
     private boolean wasHoldingXpBottle = false;
@@ -26,8 +29,6 @@ public class HudRenderingShit implements HudRenderCallback {
                 || mc.player.getOffHandStack().getItem() == Items.EXPERIENCE_BOTTLE;
 
         if (isHoldingXpBottle && !wasHoldingXpBottle) {
-            int totalExperience = getTotalExperienceFromBottles(mc);
-
             ItemStack[] armorItems = {
                     mc.player.getInventory().armor.get(3), // Helmet
                     mc.player.getInventory().armor.get(2), // Chestplate
@@ -35,7 +36,7 @@ public class HudRenderingShit implements HudRenderCallback {
                     mc.player.getInventory().armor.get(0)  // Boots
             };
 
-            targetDurability = calculateTargetDurability(armorItems, totalExperience);
+            targetDurability = calculate_target_durability(armorItems, get_experience_from_bottles(mc));
         }
 
         wasHoldingXpBottle = isHoldingXpBottle;
@@ -55,54 +56,48 @@ public class HudRenderingShit implements HudRenderCallback {
         }
     }
 
-    private int getTotalExperienceFromBottles(MinecraftClient mc) {
+    private static int get_experience_from_bottles(MinecraftClient mc) {
         int xpBottleCount = 0;
 
-        // Count all XP bottles in the player's inventory
         for (ItemStack stack : mc.player.getInventory().main) {
             if (stack.getItem() == Items.EXPERIENCE_BOTTLE) {
                 xpBottleCount += stack.getCount();
             }
         }
 
-        return xpBottleCount * XP_PER_BOTTLE;
+        ItemStack offHandStack = mc.player.getInventory().offHand.getFirst();
+        if (offHandStack.getItem() == Items.EXPERIENCE_BOTTLE) {
+            xpBottleCount += offHandStack.getCount();
+        }
+
+        return xpBottleCount;
     }
 
-    private static int calculateTargetDurability(ItemStack[] armorItems, int totalExperience) {
-        int low = 0;
-        int high = MAX_TARGET_DURABILITY;
-        int bestDurability = low;
+    private static int calculate_target_durability(ItemStack[] armorItems, int experience) {
+        List<ItemStack> armor = Arrays.stream(armorItems).toList();
+        int averagedura = getAveragedura(armor);
+        int exp = (experience * DURA_PER_BOTTLE) / 4;
 
-        while (low <= high) {
-            int mid = (low + high) / 2;
-            int totalExperienceNeeded = calculateTotalExperience(armorItems, mid);
+        if(averagedura + exp <= MAX_TARGET_DURABILITY) {
+            return averagedura + exp;
+        }
+        else {
+            return MAX_TARGET_DURABILITY;
+        }
+    }
 
-            if (totalExperienceNeeded <= totalExperience) {
-                bestDurability = mid;
-                low = mid + 1;
-            } else {
-                high = mid - 1;
+    private static int getAveragedura(List<ItemStack> armor) {
+        int totalDurability = 0;
+        int itemCount = 0;
+
+        for (ItemStack item : armor) {
+            if (!item.isEmpty()) {
+                totalDurability += item.getMaxDamage() - item.getDamage();
+                itemCount++;
             }
         }
 
-        return bestDurability;
+        return itemCount > 0 ? totalDurability / itemCount : 0;
     }
 
-    private static int calculateTotalExperience(ItemStack[] armorItems, int targetDura) {
-        int totalExperienceNeeded = 0;
-        for (ItemStack armor : armorItems) {
-            if (!armor.isEmpty()) {
-                int currentDamage = armor.getDamage();
-                int maxDurability = armor.getMaxDamage();
-                int remainingDurability = maxDurability - currentDamage;
-
-                int experienceNeeded = (targetDura - remainingDurability);
-
-                if (experienceNeeded > 0) {
-                    totalExperienceNeeded += experienceNeeded;
-                }
-            }
-        }
-        return totalExperienceNeeded;
-    }
 }
